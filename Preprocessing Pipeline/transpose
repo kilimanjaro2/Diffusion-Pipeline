@@ -1,0 +1,92 @@
+#!/bin/bash
+#
+# transpose
+
+#---------------- FUNCTION: HELP ----------------#
+print_help() {
+echo "
+Uso:    `basename $0` file
+
+This script transposes column to row or viceversa and overwrites a the file.
+Taken from here: http://stackoverflow.com/questions/1729824/transpose-a-file-in-bash
+Modified by Raúl RC
+"
+}
+
+#---------------- FUNCTION: PRINT COLOR COMMAND ----------------#
+cmd() {
+text=$1
+echo -e "\033[38;5;208m \nCOMMAND --> $text \033[0m"
+echo $($text)
+}
+
+#---------------- WARNINGS ----------------#
+if [ $# -lt 1 ]
+then
+	echo -e "\e[0;31m\n[ERROR]... \tThere is no file to transpose\n\e[0m\t\tText file: $1"
+	print_help
+	exit 0
+fi
+
+
+# --------------------------------------------------------------- #
+# 			Starting Requirements
+# --------------------------------------------------------------- #
+
+#---------------- Declaring variables ----------------#
+myText=$1
+tmp=/tmp/transpose_$RANDOM
+tmp_txt=${tmp}/transpose.txt
+
+#---------------- Timer & Beginning ----------------#
+aloita=$(date +%s.%N)
+echo -e "\033[48;5;22m\n[INIT]... \tTransposing Column-Row from $myText\n\033[0m"
+
+
+
+#---------------- Temporal directory ----------------#
+mkdir $tmp
+echo  -e "\033[38;5;45m\n[INFO]... tmp directory: \033[0m"
+echo   -e "\033[38;5;208mDIR -->\t $tmp\033[0m"
+
+
+
+#---------------- FUNCTION Transposing the File ----------------#
+transp() {
+declare -a array=( )                      # we build a 1-D-array
+
+read -a line < "$1"                       # read the headline
+
+COLS=${#line[@]}                          # save number of columns
+
+index=0
+while read -a line ; do
+    for (( COUNTER=0; COUNTER<${#line[@]}; COUNTER++ )); do
+        array[$index]=${line[$COUNTER]}
+        ((index++))
+    done
+done < "$1"
+
+for (( ROW = 0; ROW < COLS; ROW++ )); do
+  for (( COUNTER = ROW; COUNTER < ${#array[@]}; COUNTER += COLS )); do
+    printf "%s\t" ${array[$COUNTER]}
+  done
+  printf "\n"
+done
+}
+
+
+#----------- Apply the transpose fucntion to the file and overwrites it -----------#
+transp $myText > ${tmp_txt}
+mv -v ${tmp_txt} $myText
+
+
+#----------- Removes temporal directory -----------#
+echo -e "\033[38;5;45m\n[INFO]... Removing temporal files: $tmp\e[0m"
+ rm -Rv $tmp
+
+
+#----------- Outfile -----------#
+echo  -e "\033[38;5;45m\n[INFO]... Outfile: ${myText} \033[0m"
+Nrow=`cat $myText | wc -l`
+echo -e "Number of rows: $Nrow\n"
